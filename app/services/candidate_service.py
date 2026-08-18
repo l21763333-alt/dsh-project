@@ -1,7 +1,8 @@
-"""候选人数据管理：字段归一化、去重（手机号/邮箱）、档案维护。"""
+"""候选人数据管理：字段归一化、去重（手机号/邮箱）、档案维护、关键词检索。"""
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models.candidate import Candidate
@@ -59,7 +60,48 @@ class CandidateService:
         """按 ID 查询候选人。"""
         return self.db.get(Candidate, candidate_id)
 
+    def list(
+        self,
+        page: int = 1,
+        size: int = 20,
+        q: Optional[str] = None,
+        education: Optional[str] = None,
+    ) -> List[Candidate]:
+        """候选人列表（创建时间倒序，支持关键词与学历过滤）。"""
+        query = self._apply_filters(q=q, education=education)
+        return (
+            query.order_by(Candidate.created_at.desc())
+            .offset((page - 1) * size)
+            .limit(size)
+            .all()
+        )
+
+    def count(self, q: Optional[str] = None, education: Optional[str] = None) -> int:
+        """候选人总数（与 list 使用相同过滤条件）。"""
+        return self._apply_filters(q=q, education=education).count()
+
     # ---------- 私有 ----------
+
+    def _apply_filters(
+        self,
+        q: Optional[str] = None,
+        education: Optional[str] = None,
+    ):
+        """关键词(q)匹配 姓名/手机号/邮箱/简历文本；学历精确过滤。"""
+        query = self.db.query(Candidate)
+        if education:
+            query = query.filter(Candidate.education == education)
+        if q and q.strip():
+            pattern = f"%{q.strip()}%"
+            query = query.filter(
+                or_(
+                    Candidate.name.like(pattern),
+                    Candidate.phone.like(pattern),
+                    Candidate.email.like(pattern),
+                    Candidate.resume_text.like(pattern),
+                )
+            )
+        return query
 
     def _find_by_dedup(self, normalized: Dict[str, Any]) -> Optional[Candidate]:
         """去重：优先手机号精确匹配，其次邮箱精确匹配。"""

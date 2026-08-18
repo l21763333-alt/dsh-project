@@ -4,6 +4,8 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.resume import ResumeOut
+
 
 class CandidateOut(BaseModel):
     """候选人档案（列表与详情共用）。"""
@@ -26,3 +28,9 @@ class CandidateOut(BaseModel):
     source: str
     created_at: datetime
     updated_at: datetime
+
+
+class CandidateDetailOut(CandidateOut):
+    """候选人详情：含关联简历列表。"""
+
+    resumes: List[ResumeOut] = []
