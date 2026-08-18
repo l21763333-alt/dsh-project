@@ -13,11 +13,36 @@ os.environ["LLM_BASE_URL"] = "https://api.deepseek.com"
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app.core.database import Base, engine  # noqa: E402
 from app.main import app  # noqa: E402
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _create_tables():
+    """会话级建表：服务层单测不经过 TestClient 启动钩子，需显式建表。"""
+    from app import models  # noqa: F401 —— 注册全部模型
+
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
+@pytest.fixture(autouse=True)
+def _clean_tables():
+    """每个用例结束后清空数据（SQLite 内存库跨用例共享同一连接，防止数据串扰）。"""
+    yield
+    from app.core.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        for table in reversed(Base.metadata.sorted_tables):
+            db.execute(table.delete())
+        db.commit()
+    finally:
+        db.close()
 
 
 @pytest.fixture()
 def client():
-    """FastAPI TestClient：with 块触发 startup 钩子（建表）。"""
+    """FastAPI TestClient：with 块触发 startup 钩子（建表，幂等）。"""
     with TestClient(app) as c:
         yield c
