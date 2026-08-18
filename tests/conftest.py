@@ -26,6 +26,16 @@ def _create_tables():
     yield
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _isolate_storage(tmp_path_factory):
+    """测试期间把文件存储隔离到临时目录，避免污染 data/files（测试上传走真实 upload 路径）。"""
+    from app.core.config import settings
+
+    tmp_storage = tmp_path_factory.mktemp("test_storage")
+    settings.STORAGE_PATH = str(tmp_storage)
+    yield
+
+
 @pytest.fixture(autouse=True)
 def _clean_tables():
     """每个用例结束后清空数据（SQLite 内存库跨用例共享同一连接，防止数据串扰）。"""
