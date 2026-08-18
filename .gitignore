@@ -37,3 +37,5 @@ web/.npm-cache/
 .mysql-data/
 .mysql.sock
 .mysql.pid
+.mysql.err
+.mysql.pid
