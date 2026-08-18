@@ -29,7 +29,10 @@ cp .env.example .env
 # 编辑 .env：填入 MYSQL_* 与 LLM_API_KEY（DeepSeek Key，成本预算内按量计费）
 ```
 
-> ⚠️ `.env` 已在 `.gitignore` 中；**严禁将真实 API Key 提交到公开仓库**。
+> ⚠️ **安全红线**：
+> - `.env` 已在 `.gitignore` 中；**严禁将真实 API Key 提交到公开仓库**。
+> - **请勿**把 Key 填进 `.env.example`（该文件会随仓库提交）——只填 `.env`。
+> - 若 Key 误提交到公开仓库，请立即到 DeepSeek 控制台吊销并更换。
 
 ### 2. 方式 A：Docker Compose（推荐，含 MySQL）
 
