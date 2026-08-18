@@ -29,3 +29,6 @@ web/.npm-cache/
 
 # 日志
 *.log
+
+# 本地工具缓存
+.brew-cache/
