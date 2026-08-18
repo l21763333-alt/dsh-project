@@ -20,6 +20,7 @@ data/
 # 前端
 web/node_modules/
 web/dist/
+web/.npm-cache/
 
 # IDE / 系统
 .idea/
