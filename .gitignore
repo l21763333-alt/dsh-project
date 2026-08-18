@@ -42,3 +42,15 @@ web/.npm-cache/
 
 # 用户本地测试简历（防误提交）
 tests/*.docx
+
+# 媒体/视频文件（禁止上传）
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.m4v
+*.mp3
+*.wav
