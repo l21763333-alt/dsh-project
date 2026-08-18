@@ -29,28 +29,41 @@ cp .env.example .env
 # 编辑 .env：填入 MYSQL_* 与 LLM_API_KEY（DeepSeek Key，成本预算内按量计费）
 ```
 
-> ⚠️ `.env` 已在 `.gitignore` 中；**严禁将真实 API Key 提交到公开仓库**。
+> ⚠️ **安全红线**：
+> - `.env` 已在 `.gitignore` 中；**严禁将真实 API Key 提交到公开仓库**。
+> - **请勿**把 Key 填进 `.env.example`（该文件会随仓库提交）——只填 `.env`。
+> - 若 Key 误提交到公开仓库，请立即到 DeepSeek 控制台吊销并更换。
 
-### 2. 启动后端
+### 2. 方式 A：Docker Compose（推荐，含 MySQL）
 
 ```bash
-./scripts/dev.sh          # 自动建 venv + 装依赖，监听 8000 端口
+# 安装 Docker（macOS 可用 colima：brew install colima docker）
+colima start
+docker compose up -d --build
+# 访问 http://127.0.0.1:8000 （前端看板）
+# API 文档 http://127.0.0.1:8000/api/docs
+```
+
+### 2'. 方式 B：本地运行（MySQL 需自行准备）
+
+```bash
+# 初始化数据库（如用本地/远程 MySQL）
+MYSQL_ROOT_PASSWORD=xxx ./scripts/init_db.sh
+
+# 启动后端
+./scripts/dev.sh          # 监听 8000 端口
 # 或手动：
 # python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 # .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# 前端（生产单端口部署）
+cd web && npm install && npm run build   # FastAPI 自动托管 web/dist
+
+# 前端（开发模式，热更新）
+cd web && npm run dev                    # http://localhost:5173（代理到 8000）
 ```
 
-接口文档：http://127.0.0.1:8000/api/docs
-
-### 3. 启动前端（开发模式）
-
-```bash
-cd web && npm install && npm run dev   # http://localhost:5173（代理到 8000）
-```
-
-生产模式（单端口部署）：`cd web && npm run build`，FastAPI 自动托管 `web/dist`。
-
-### 4. 运行测试
+### 3. 运行测试
 
 ```bash
 .venv/bin/pytest -q

@@ -29,3 +29,13 @@ web/.npm-cache/
 
 # 日志
 *.log
+
+# 本地工具缓存
+.brew-cache/
+
+# 本地 MySQL 数据目录（不入库）
+.mysql-data/
+.mysql.sock
+.mysql.pid
+.mysql.err
+.mysql.pid
