@@ -154,3 +154,45 @@ def test_h5_collect_endpoint(client: TestClient, monkeypatch) -> None:
     detail = client.get(f"/api/v1/resumes/{resp.json()['id']}").json()
     assert detail["parse_status"] == "done"
     assert detail["parsed_json"]["name"] == "李四"
+
+
+def test_parse_records_pipeline_steps(client: TestClient, monkeypatch) -> None:
+    """解析过程步骤被完整记录（上传→文档解析→DeepSeek→入库）。"""
+    monkeypatch.setattr("app.services.resume_service.get_llm", lambda: FakeLLM())
+    resp = _upload(client)
+    resume_id = resp.json()["id"]
+    detail = client.get(f"/api/v1/resumes/{resume_id}").json()
+    steps = detail["parse_steps"]
+    assert steps is not None and len(steps) == 4
+    names = [s["name"] for s in steps]
+    assert names == [
+        "文件上传",
+        "文档解析（python-docx）",
+        "DeepSeek 大模型提取",
+        "候选人入库（归一化/去重）",
+    ]
+    # 全部成功，且带时间戳与细节
+    assert all(s["status"] == "done" for s in steps)
+    assert all(s["at"] for s in steps)
+    assert "deepseek-chat" in steps[2]["detail"]
+    assert "提取文本" in steps[1]["detail"]
+    assert "候选人" in steps[3]["detail"]
+
+
+def test_parse_steps_mark_llm_failed_on_error(client: TestClient, monkeypatch) -> None:
+    """LLM 失败时，DeepSeek 步骤标记为 failed 并携带错误信息，其余步骤保持原状。"""
+    from app.ai.llm import LLMOutputError
+
+    monkeypatch.setattr(
+        "app.services.resume_service.get_llm",
+        lambda: FakeLLM(error=LLMOutputError("模型输出无法解析")),
+    )
+    resp = _upload(client)
+    detail = client.get(f"/api/v1/resumes/{resp.json()['id']}").json()
+    assert detail["parse_status"] == "failed"
+    steps = detail["parse_steps"]
+    assert steps[0]["status"] == "done"      # 上传已完成
+    assert steps[1]["status"] == "done"      # 文档解析已完成
+    assert steps[2]["status"] == "failed"    # LLM 步骤失败
+    assert "模型输出无法解析" in steps[2]["detail"]
+    assert steps[3]["status"] == "pending"   # 入库未执行

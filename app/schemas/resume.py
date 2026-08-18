@@ -1,12 +1,12 @@
 """简历相关出入参。"""
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict
 
 
 class ResumeOut(BaseModel):
-    """简历详情（含解析产物）。"""
+    """简历详情（含解析产物与解析过程步骤）。"""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -17,6 +17,7 @@ class ResumeOut(BaseModel):
     source: str
     parse_status: str
     parse_error: Optional[str] = None
+    parse_steps: Optional[List[dict[str, Any]]] = None
     raw_text: Optional[str] = None
     parsed_json: Optional[dict[str, Any]] = None
     created_at: datetime

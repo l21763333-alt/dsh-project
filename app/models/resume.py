@@ -19,6 +19,8 @@ class Resume(Base):
     parse_status = Column(String(16), default="pending", nullable=False, index=True)
     # pending -> parsing -> done | failed
     parse_error = Column(String(512), nullable=True)
+    # 解析管线步骤日志：[{name, status, detail, at}, ...]（前端过程可视化）
+    parse_steps = Column(JSON, nullable=True)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
