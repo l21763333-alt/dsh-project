@@ -39,3 +39,6 @@ web/.npm-cache/
 .mysql.pid
 .mysql.err
 .mysql.pid
+
+# 用户本地测试简历（防误提交）
+tests/*.docx

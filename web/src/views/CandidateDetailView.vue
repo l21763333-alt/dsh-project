@@ -49,6 +49,24 @@
             </el-tag>
           </template>
           <div class="resume-block">
+            <div class="block-title">LLM 解析过程</div>
+            <el-steps
+              v-if="r.parse_steps && r.parse_steps.length"
+              direction="vertical"
+              :active="parseActive(r.parse_steps)"
+              finish-status="success"
+              process-status="process"
+              class="parse-steps"
+            >
+              <el-step
+                v-for="(s, i) in r.parse_steps"
+                :key="i"
+                :title="s.name"
+                :description="s.detail || (s.at ? `完成于 ${s.at}` : '')"
+                :status="parseStepStatus(s.status)"
+              />
+            </el-steps>
+            <el-text v-else type="info" size="small">（无过程记录）</el-text>
             <div class="block-title">AI 结构化提取结果</div>
             <pre class="pre">{{ pretty(r.parsed_json) }}</pre>
             <div class="block-title">简历原文</div>
@@ -78,6 +96,15 @@ function statusType(status) {
 }
 function pretty(obj) {
   return obj ? JSON.stringify(obj, null, 2) : '（暂无）'
+}
+
+// ---- 解析步骤展示辅助 ----
+function parseStepStatus(status) {
+  return { done: 'success', running: 'process', failed: 'error', pending: 'wait' }[status] || 'wait'
+}
+function parseActive(steps) {
+  const idx = steps.findIndex((s) => s.status !== 'done')
+  return idx === -1 ? steps.length : idx
 }
 
 onMounted(async () => {
